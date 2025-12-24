@@ -34,7 +34,7 @@ const HomePage = ({ loaderData }: Route.ComponentProps) => {
   const { questions, session } = loaderData;
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="xl" px="md">
       <Title order={1} mb="xl">
         Formulaire ESG/CSRD
       </Title>

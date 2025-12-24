@@ -1,4 +1,4 @@
-import { Button, Divider, Stack } from "@mantine/core";
+import { Button, Divider, Group, Stack } from "@mantine/core";
 import { useForm } from "@tanstack/react-form";
 import { useSubmit } from "react-router";
 import type { QuestionNode } from "~/lib/types";
@@ -67,9 +67,11 @@ export const DynamicForm = ({ questions, sessionId }: Props) => {
 
         <Divider />
 
-        <Button type="submit" size="md">
-          Sauvegarder
-        </Button>
+        <Group justify="flex-end">
+          <Button type="submit" size="md">
+            Sauvegarder
+          </Button>
+        </Group>
       </Stack>
     </form>
   );

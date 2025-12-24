@@ -1,4 +1,4 @@
-import { ColorSchemeScript, MantineProvider } from "@mantine/core";
+import { ColorSchemeScript, createTheme, MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import {
   isRouteErrorResponse,
@@ -11,6 +11,24 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+
+const theme = createTheme({
+  primaryColor: "kiosk",
+  colors: {
+    kiosk: [
+      "#f0fdf6",
+      "#D5F5E8",
+      "#a7f3d0",
+      "#6ee7b7",
+      "#34d399",
+      "#10b981",
+      "#059669",
+      "#047857",
+      "#065f46",
+      "#064e3b",
+    ],
+  },
+});
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -35,7 +53,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => (
       <ColorSchemeScript />
     </head>
     <body>
-      <MantineProvider>{children}</MantineProvider>
+      <MantineProvider theme={theme}>{children}</MantineProvider>
       <ScrollRestoration />
       <Scripts />
     </body>

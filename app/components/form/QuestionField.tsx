@@ -1,3 +1,4 @@
+import { Card, Stack, Text } from "@mantine/core";
 import type { QuestionNode } from "~/lib/types";
 import { EnumField } from "./fields/EnumField";
 import { NumberField } from "./fields/NumberField";
@@ -16,10 +17,12 @@ export const QuestionField = ({ question, form }: Props) => {
   // Grouping section (no contentType)
   if (!contentType && children.length > 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">{label}</h2>
+      <Card shadow="sm" padding="lg" radius="md" withBorder>
+        <Text fw={600} size="xl" mb="md">
+          {label}
+        </Text>
         <QuestionGroup questions={children} form={form} />
-      </div>
+      </Card>
     );
   }
 
@@ -30,13 +33,15 @@ export const QuestionField = ({ question, form }: Props) => {
 
   // Simple fields
   return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
+    <Stack gap="xs">
+      <Text fw={500} size="sm">
         {label}
         {question.unit && (
-          <span className="text-gray-500 ml-1">({question.unit})</span>
+          <Text span c="dimmed" ml={4}>
+            ({question.unit})
+          </Text>
         )}
-      </label>
+      </Text>
 
       {contentType === "number" && (
         <NumberField form={form} name={question.id} unit={question.unit} />
@@ -51,6 +56,6 @@ export const QuestionField = ({ question, form }: Props) => {
           options={question.enumOptions || []}
         />
       )}
-    </div>
+    </Stack>
   );
 };

@@ -1,3 +1,4 @@
+import { Button, Divider, Stack } from "@mantine/core";
 import { useForm } from "@tanstack/react-form";
 import { useSubmit } from "react-router";
 import type { QuestionNode } from "~/lib/types";
@@ -8,13 +9,6 @@ interface Props {
   sessionId: string;
 }
 
-/**
- * Flattens the answers object into an array of answer objects.
- * Handles both simple and array-based (e.g., table) answers.
- *
- * @param values - The form values as a record of question IDs to answers.
- * @returns An array of objects each containing questionId, value, and optionally rowIndex.
- */
 const flattenAnswers = (
   values: Record<string, unknown>,
 ): { questionId: string; value: string; rowIndex?: number }[] => {
@@ -47,13 +41,6 @@ const flattenAnswers = (
   return results;
 };
 
-/**
- * Renders a dynamic form based on the provided questions.
- * Handles form submission and answer flattening before sending data.
- *
- * @param questions - The list of questions to render in the form.
- * @param sessionId - The session identifier to include in the submission.
- */
 export const DynamicForm = ({ questions, sessionId }: Props) => {
   const submit = useSubmit();
 
@@ -74,18 +61,16 @@ export const DynamicForm = ({ questions, sessionId }: Props) => {
         e.preventDefault();
         form.handleSubmit();
       }}
-      className="space-y-8"
     >
-      <QuestionGroup questions={questions} form={form} />
+      <Stack gap="xl">
+        <QuestionGroup questions={questions} form={form} />
 
-      <div className="flex justify-end pt-6 border-t border-gray-200">
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
+        <Divider />
+
+        <Button type="submit" size="md">
           Sauvegarder
-        </button>
-      </div>
+        </Button>
+      </Stack>
     </form>
   );
 };

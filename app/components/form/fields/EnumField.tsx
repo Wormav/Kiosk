@@ -1,3 +1,5 @@
+import { Select } from "@mantine/core";
+
 interface Props {
   form: any;
   name: string;
@@ -7,19 +9,14 @@ interface Props {
 export const EnumField = ({ form, name, options }: Props) => (
   <form.Field name={name}>
     {(field: any) => (
-      <select
-        value={field.state.value ?? ""}
-        onChange={(e) => field.handleChange(e.target.value)}
+      <Select
+        value={field.state.value ?? null}
+        onChange={(val) => field.handleChange(val)}
         onBlur={field.handleBlur}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-      >
-        <option value="">-- Sélectionner --</option>
-        {options.map((opt) => (
-          <option key={opt.id} value={opt.id}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        data={options.map((opt) => ({ value: opt.id, label: opt.label }))}
+        placeholder="-- Sélectionner --"
+        clearable
+      />
     )}
   </form.Field>
 );

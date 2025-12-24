@@ -1,3 +1,4 @@
+import { Stack } from "@mantine/core";
 import type { QuestionNode } from "~/lib/types";
 import { QuestionField } from "./QuestionField";
 
@@ -7,9 +8,9 @@ interface Props {
 }
 
 export const QuestionGroup = ({ questions, form }: Props) => (
-  <div className="space-y-6">
+  <Stack gap="lg">
     {questions.map((question) => (
       <QuestionField key={question.id} question={question} form={form} />
     ))}
-  </div>
+  </Stack>
 );

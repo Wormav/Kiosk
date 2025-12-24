@@ -12,7 +12,7 @@ model Question {
   order       Int     @default(0)
   unit        String?
 
-  // Hiérarchie
+  // Hierarchy
   parentId String?
   parent   Question?  @relation("QuestionHierarchy", fields: [parentId], references: [id])
   children Question[] @relation("QuestionHierarchy")
@@ -29,7 +29,7 @@ model QuestionLabel {
   id         String   @id @default(cuid())
   questionId String
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  locale     String // "en" ou "fr"
+  locale     String // "en" or "fr"
   label      String
 
   @@unique([questionId, locale])
@@ -67,7 +67,7 @@ model Answer {
   questionId String
   question   Question    @relation(fields: [questionId], references: [id])
   value      String?
-  rowIndex   Int? // Pour les questions de type table
+  rowIndex   Int? // For table-type questions
 
   @@unique([sessionId, questionId, rowIndex])
 }

@@ -1,3 +1,12 @@
+import {
+  Button,
+  Card,
+  Group,
+  NumberInput,
+  Table,
+  Text,
+  TextInput,
+} from "@mantine/core";
 import { useState } from "react";
 import type { QuestionNode } from "~/lib/types";
 
@@ -13,85 +22,74 @@ export const TableField = ({ question, form }: Props) => {
   const removeRow = () => setRowCount((c) => Math.max(1, c - 1));
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="bg-gray-100 px-4 py-3 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-800">{question.label}</h3>
-      </div>
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Text fw={600} size="lg" mb="md">
+        {question.label}
+      </Text>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 w-12">
-                #
-              </th>
-              {question.children.map((child) => (
-                <th
-                  key={child.id}
-                  className="px-4 py-3 text-left text-sm font-medium text-gray-600"
-                >
-                  {child.label}
-                  {child.unit && (
-                    <span className="text-gray-400 font-normal ml-1">
-                      ({child.unit})
-                    </span>
-                  )}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {Array.from({ length: rowCount }, (_, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm text-gray-500 font-medium">
+      <Table striped highlightOnHover>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th w={50}>#</Table.Th>
+            {question.children.map((child) => (
+              <Table.Th key={child.id}>
+                {child.label}
+                {child.unit && (
+                  <Text span c="dimmed" size="sm" ml={4}>
+                    ({child.unit})
+                  </Text>
+                )}
+              </Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {Array.from({ length: rowCount }, (_, rowIndex) => (
+            <Table.Tr key={rowIndex}>
+              <Table.Td>
+                <Text c="dimmed" size="sm">
                   {rowIndex + 1}
-                </td>
-                {question.children.map((child) => (
-                  <td key={child.id} className="px-4 py-3">
-                    <form.Field
-                      name={`${question.id}[${rowIndex}].${child.id}`}
-                    >
-                      {(field: any) => (
-                        <input
-                          type={
-                            child.contentType === "number" ? "number" : "text"
-                          }
-                          step={
-                            child.contentType === "number" ? "any" : undefined
-                          }
+                </Text>
+              </Table.Td>
+              {question.children.map((child) => (
+                <Table.Td key={child.id}>
+                  <form.Field name={`${question.id}[${rowIndex}].${child.id}`}>
+                    {(field: any) =>
+                      child.contentType === "number" ? (
+                        <NumberInput
+                          value={field.state.value ?? ""}
+                          onChange={(val) => field.handleChange(val)}
+                          onBlur={field.handleBlur}
+                          hideControls
+                          size="sm"
+                        />
+                      ) : (
+                        <TextInput
                           value={field.state.value ?? ""}
                           onChange={(e) => field.handleChange(e.target.value)}
                           onBlur={field.handleBlur}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-sm"
+                          size="sm"
                         />
-                      )}
-                    </form.Field>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      )
+                    }
+                  </form.Field>
+                </Table.Td>
+              ))}
+            </Table.Tr>
+          ))}
+        </Table.Tbody>
+      </Table>
 
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex gap-3">
-        <button
-          type="button"
-          onClick={addRow}
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-        >
+      <Group mt="md">
+        <Button variant="light" size="xs" onClick={addRow}>
           + Ajouter une ligne
-        </button>
+        </Button>
         {rowCount > 1 && (
-          <button
-            type="button"
-            onClick={removeRow}
-            className="text-sm text-red-600 hover:text-red-800 font-medium"
-          >
+          <Button variant="light" color="red" size="xs" onClick={removeRow}>
             - Supprimer une ligne
-          </button>
+          </Button>
         )}
-      </div>
-    </div>
+      </Group>
+    </Card>
   );
 };

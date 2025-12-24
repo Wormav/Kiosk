@@ -1,9 +1,55 @@
 import type { AnswerInput, QuestionNode } from "~/lib/types";
 import { prisma } from "./db";
 
+// Raw question type from database
+interface RawQuestion {
+  id: string;
+  contentType: string | null;
+  order: number;
+  unit: string | null;
+  parentId: string | null;
+  labels: { locale: string; label: string }[];
+  enumOptions: {
+    id: string;
+    order: number;
+    labels: { locale: string; label: string }[];
+  }[];
+}
+
 /**
- * Retrieves the hierarchy of questions from the database, including their labels, enum options, and children,
- * and maps them into a tree structure suitable for use in the application.
+ * Maps a raw question from database to a QuestionNode with its children.
+ */
+const mapQuestion = (
+  question: RawQuestion,
+  childrenMap: Map<string | null, RawQuestion[]>,
+  locale: string,
+): QuestionNode => {
+  const label =
+    question.labels.find((l) => l.locale === locale)?.label || question.id;
+
+  const enumOptions = question.enumOptions.map((opt) => ({
+    id: opt.id,
+    label: opt.labels.find((l) => l.locale === locale)?.label || "",
+  }));
+
+  const children = childrenMap.get(question.id) || [];
+
+  return {
+    id: question.id,
+    label,
+    contentType: question.contentType as QuestionNode["contentType"],
+    order: question.order,
+    unit: question.unit,
+    enumOptions: enumOptions.length > 0 ? enumOptions : undefined,
+    children: children
+      .sort((a, b) => a.order - b.order)
+      .map((child) => mapQuestion(child, childrenMap, locale)),
+  };
+};
+
+/**
+ * Retrieves the hierarchy of questions from the database with arbitrary depth.
+ * Fetches all questions in a single query and builds the tree in memory.
  *
  * @param locale - The locale to use for labels (default is "fr").
  * @returns A promise that resolves to an array of QuestionNode objects representing the question hierarchy.
@@ -11,49 +57,36 @@ import { prisma } from "./db";
 export const getQuestionsHierarchy = async (
   locale: string = "fr",
 ): Promise<QuestionNode[]> => {
-  const questions = await prisma.question.findMany({
+  // Fetch all questions in a single query
+  const allQuestions = await prisma.question.findMany({
     include: {
       labels: true,
       enumOptions: {
         include: { labels: true },
         orderBy: { order: "asc" },
       },
-      children: {
-        include: {
-          labels: true,
-          enumOptions: {
-            include: { labels: true },
-            orderBy: { order: "asc" },
-          },
-        },
-        orderBy: { order: "asc" },
-      },
     },
-    where: { parentId: null },
     orderBy: { order: "asc" },
   });
 
-  const mapQuestion = (q: (typeof questions)[0]): QuestionNode => {
-    const label = q.labels.find((l) => l.locale === locale)?.label || q.id;
-    const enumOptions = q.enumOptions.map((opt) => ({
-      id: opt.id,
-      label: opt.labels.find((l) => l.locale === locale)?.label || "",
-    }));
+  // Build a map of parentId -> children for efficient tree construction
+  const childrenMap = new Map<string | null, RawQuestion[]>();
 
-    return {
-      id: q.id,
-      label,
-      contentType: q.contentType as QuestionNode["contentType"],
-      order: q.order,
-      unit: q.unit,
-      enumOptions: enumOptions.length > 0 ? enumOptions : undefined,
-      children: (q.children || []).map((child) =>
-        mapQuestion(child as (typeof questions)[0]),
-      ),
-    };
-  };
+  for (const question of allQuestions) {
+    const parentId = question.parentId;
+    if (!childrenMap.has(parentId)) {
+      childrenMap.set(parentId, []);
+    }
+    childrenMap.get(parentId)!.push(question);
+  }
 
-  return questions.map(mapQuestion);
+  // Get root questions (those without a parent)
+  const rootQuestions = childrenMap.get(null) || [];
+
+  // Build the tree recursively
+  return rootQuestions
+    .sort((a, b) => a.order - b.order)
+    .map((question) => mapQuestion(question, childrenMap, locale));
 };
 
 /**

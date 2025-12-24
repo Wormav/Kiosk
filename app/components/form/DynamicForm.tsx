@@ -15,27 +15,35 @@ const flattenAnswers = (
   const results: { questionId: string; value: string; rowIndex?: number }[] =
     [];
 
-  for (const [key, value] of Object.entries(values)) {
-    if (Array.isArray(value)) {
+  const processValue = (key: string, value: unknown, rowIndex?: number) => {
+    if (value === undefined || value === null || value === "") return;
+
+    if (typeof value === "object" && !Array.isArray(value)) {
+      // Nested object (e.g., table row fields)
+      for (const [nestedKey, nestedValue] of Object.entries(
+        value as Record<string, unknown>,
+      )) {
+        processValue(nestedKey, nestedValue, rowIndex);
+      }
+    } else if (Array.isArray(value)) {
+      // Array of rows (table data)
       value.forEach((row, index) => {
         if (row && typeof row === "object") {
-          for (const [fieldKey, fieldValue] of Object.entries(
-            row as Record<string, unknown>,
-          )) {
-            results.push({
-              questionId: fieldKey,
-              value: String(fieldValue ?? ""),
-              rowIndex: index,
-            });
-          }
+          processValue(key, row, index);
         }
       });
-    } else if (value !== undefined && value !== "" && value !== null) {
+    } else {
+      // Primitive value
       results.push({
         questionId: key,
         value: String(value),
+        rowIndex,
       });
     }
+  };
+
+  for (const [key, value] of Object.entries(values)) {
+    processValue(key, value);
   }
 
   return results;

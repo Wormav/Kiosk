@@ -107,34 +107,42 @@ export const getOrCreateSession = async (sessionId?: string) => {
 };
 
 /**
- * Retrieves all answers for a given session and organizes them into a structured object.
+ * Retrieves all answers for a given session and formats them for form default values.
  *
  * @param sessionId - The ID of the session to retrieve answers for.
- * @returns A promise that resolves to an object mapping question IDs to their answers.
+ * @returns A promise that resolves to an object suitable for form defaultValues.
  */
 export const getSessionAnswers = async (sessionId: string) => {
   const answers = await prisma.answer.findMany({
     where: { sessionId },
   });
 
-  const result: Record<
-    string,
-    string | Record<number, Record<string, string>>
-  > = {};
+  const result: Record<string, unknown> = {};
 
   for (const answer of answers) {
     if (answer.rowIndex !== null) {
-      if (!result[answer.questionId]) {
-        result[answer.questionId] = {};
+      // Find the parent table question
+      const question = await prisma.question.findUnique({
+        where: { id: answer.questionId },
+        select: { parentId: true },
+      });
+
+      if (question?.parentId) {
+        const tableId = question.parentId;
+
+        if (!result[tableId]) {
+          result[tableId] = [];
+        }
+
+        const tableArray = result[tableId] as Record<string, unknown>[];
+
+        // Ensure the row exists
+        while (tableArray.length <= answer.rowIndex) {
+          tableArray.push({});
+        }
+
+        tableArray[answer.rowIndex][answer.questionId] = answer.value || "";
       }
-      const tableAnswers = result[answer.questionId] as Record<
-        number,
-        Record<string, string>
-      >;
-      if (!tableAnswers[answer.rowIndex]) {
-        tableAnswers[answer.rowIndex] = {};
-      }
-      tableAnswers[answer.rowIndex][answer.questionId] = answer.value || "";
     } else {
       result[answer.questionId] = answer.value || "";
     }

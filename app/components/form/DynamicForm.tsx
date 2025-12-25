@@ -7,6 +7,7 @@ import { QuestionGroup } from "./QuestionGroup";
 interface Props {
   questions: QuestionNode[];
   sessionId: string;
+  defaultValues?: Record<string, unknown>;
 }
 
 const flattenAnswers = (
@@ -49,11 +50,15 @@ const flattenAnswers = (
   return results;
 };
 
-export const DynamicForm = ({ questions, sessionId }: Props) => {
+export const DynamicForm = ({
+  questions,
+  sessionId,
+  defaultValues = {},
+}: Props) => {
   const submit = useSubmit();
 
   const form = useForm({
-    defaultValues: {} as Record<string, unknown>,
+    defaultValues: defaultValues as Record<string, unknown>,
     onSubmit: async ({ value }) => {
       const answers = flattenAnswers(value);
       const formData = new FormData();

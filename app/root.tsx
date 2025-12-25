@@ -1,4 +1,4 @@
-import { ColorSchemeScript, createTheme, MantineProvider } from "@mantine/core";
+import { createTheme, MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import {
   isRouteErrorResponse,
@@ -31,6 +31,7 @@ const theme = createTheme({
 });
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", type: "image/jpeg", href: "/meetkiosk_logo.jpeg" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -50,17 +51,23 @@ export const Layout = ({ children }: { children: React.ReactNode }) => (
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <Meta />
       <Links />
-      <ColorSchemeScript />
     </head>
     <body>
-      <MantineProvider theme={theme}>{children}</MantineProvider>
+      <MantineProvider theme={theme} forceColorScheme="light">{children}</MantineProvider>
       <ScrollRestoration />
       <Scripts />
     </body>
   </html>
 );
 
-const App = () => <Outlet />;
+import { Navbar } from "./components/Navbar";
+
+const App = () => (
+  <>
+    <Navbar />
+    <Outlet />
+  </>
+);
 
 export default App;
 

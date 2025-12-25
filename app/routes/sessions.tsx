@@ -1,22 +1,29 @@
 import {
-    ActionIcon,
-    Badge,
-    Button,
-    Card,
-    Container,
-    Group,
-    Stack,
-    Table,
-    Text,
-    Title,
+  ActionIcon,
+  Badge,
+  Button,
+  Card,
+  Container,
+  Group,
+  Stack,
+  Table,
+  Text,
+  Title,
 } from "@mantine/core";
 import { Link, useFetcher } from "react-router";
-import { deleteAllSessions, deleteSession, getAllSessions } from "~/.server/sessions.server";
+import { getLocale, type Locale } from "~/.server/locale.server";
+import {
+  deleteAllSessions,
+  deleteSession,
+  getAllSessions,
+} from "~/.server/sessions.server";
+import { t } from "~/lib/i18n";
 import type { Route } from "./+types/sessions";
 
-export const loader = async () => {
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const locale = await getLocale(request);
   const sessions = await getAllSessions();
-  return { sessions };
+  return { sessions, locale };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -33,8 +40,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
   return { success: true };
 };
 
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("fr-FR", {
+const formatDate = (date: Date, locale: Locale) => {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-US" : "fr-FR", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
@@ -42,6 +49,7 @@ const formatDate = (date: Date) => {
 
 const SessionRow = ({
   session,
+  locale,
 }: {
   session: {
     id: string;
@@ -49,15 +57,16 @@ const SessionRow = ({
     updatedAt: Date;
     answerCount: number;
   };
+  locale: Locale;
 }) => {
   const fetcher = useFetcher();
   const isDeleting = fetcher.state !== "idle";
 
   const handleDelete = () => {
-    if (confirm("Supprimer cette session ?")) {
+    if (confirm(t("confirmDeleteSession", locale))) {
       fetcher.submit(
         { intent: "delete", sessionId: session.id },
-        { method: "post" }
+        { method: "post" },
       );
     }
   };
@@ -69,11 +78,17 @@ const SessionRow = ({
           {session.id.slice(0, 8)}...
         </Text>
       </Table.Td>
-      <Table.Td>{formatDate(session.createdAt)}</Table.Td>
-      <Table.Td>{formatDate(session.updatedAt)}</Table.Td>
+      <Table.Td>{formatDate(session.createdAt, locale)}</Table.Td>
+      <Table.Td>{formatDate(session.updatedAt, locale)}</Table.Td>
       <Table.Td>
-        <Badge variant="light" color={session.answerCount > 0 ? "green" : "gray"}>
-          {session.answerCount} réponse{session.answerCount !== 1 ? "s" : ""}
+        <Badge
+          variant="light"
+          color={session.answerCount > 0 ? "green" : "gray"}
+        >
+          {session.answerCount}{" "}
+          {session.answerCount !== 1
+            ? t("answersPlural", locale)
+            : t("answer", locale)}
         </Badge>
       </Table.Td>
       <Table.Td>
@@ -105,6 +120,7 @@ const SessionRow = ({
 // Mobile card view
 const SessionCard = ({
   session,
+  locale,
 }: {
   session: {
     id: string;
@@ -112,15 +128,16 @@ const SessionCard = ({
     updatedAt: Date;
     answerCount: number;
   };
+  locale: Locale;
 }) => {
   const fetcher = useFetcher();
   const isDeleting = fetcher.state !== "idle";
 
   const handleDelete = () => {
-    if (confirm("Supprimer cette session ?")) {
+    if (confirm(t("confirmDeleteSession", locale))) {
       fetcher.submit(
         { intent: "delete", sessionId: session.id },
-        { method: "post" }
+        { method: "post" },
       );
     }
   };
@@ -131,15 +148,21 @@ const SessionCard = ({
         <Text size="sm" fw={500}>
           {session.id.slice(0, 8)}...
         </Text>
-        <Badge variant="light" color={session.answerCount > 0 ? "green" : "gray"}>
-          {session.answerCount} réponse{session.answerCount !== 1 ? "s" : ""}
+        <Badge
+          variant="light"
+          color={session.answerCount > 0 ? "green" : "gray"}
+        >
+          {session.answerCount}{" "}
+          {session.answerCount !== 1
+            ? t("answersPlural", locale)
+            : t("answer", locale)}
         </Badge>
       </Group>
       <Text size="xs" c="dimmed">
-        Créée: {formatDate(session.createdAt)}
+        {t("created", locale)}: {formatDate(session.createdAt, locale)}
       </Text>
       <Text size="xs" c="dimmed" mb="md">
-        Modifiée: {formatDate(session.updatedAt)}
+        {t("updated", locale)}: {formatDate(session.updatedAt, locale)}
       </Text>
       <Group gap="xs">
         <ActionIcon
@@ -166,11 +189,11 @@ const SessionCard = ({
 };
 
 const SessionsPage = ({ loaderData }: Route.ComponentProps) => {
-  const { sessions } = loaderData;
+  const { sessions, locale } = loaderData;
   const fetcher = useFetcher();
 
   const handleDeleteAll = () => {
-    if (confirm("Êtes-vous sûr de vouloir supprimer TOUTES les sessions ?")) {
+    if (confirm(t("confirmDeleteAllSessions", locale))) {
       fetcher.submit({ intent: "deleteAll" }, { method: "post" });
     }
   };
@@ -178,33 +201,47 @@ const SessionsPage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <Container size="lg" py="xl" px="md">
       <Group justify="space-between" mb="xl">
-        <Title order={1}>Sessions</Title>
+        <Title order={1}>{t("sessionsTitle", locale)}</Title>
         {sessions.length > 0 && (
-          <Button color="red" onClick={handleDeleteAll} disabled={fetcher.state !== "idle"}>
-            Supprimer toutes les sessions
+          <Button
+            color="red"
+            onClick={handleDeleteAll}
+            disabled={fetcher.state !== "idle"}
+          >
+            {t("deleteAllSessions", locale)}
           </Button>
         )}
       </Group>
 
       {sessions.length === 0 ? (
-        <Text c="dimmed">Aucune session trouvée.</Text>
+        <Text c="dimmed">{t("noSessionsFound", locale)}</Text>
       ) : (
         <>
           {/* Desktop: Table view */}
-          <Card shadow="sm" padding="lg" radius="md" withBorder visibleFrom="sm">
+          <Card
+            shadow="sm"
+            padding="lg"
+            radius="md"
+            withBorder
+            visibleFrom="sm"
+          >
             <Table striped highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>ID</Table.Th>
-                  <Table.Th>Créée le</Table.Th>
-                  <Table.Th>Modifiée le</Table.Th>
-                  <Table.Th>Réponses</Table.Th>
-                  <Table.Th>Actions</Table.Th>
+                  <Table.Th>{t("id", locale)}</Table.Th>
+                  <Table.Th>{t("createdAt", locale)}</Table.Th>
+                  <Table.Th>{t("updatedAt", locale)}</Table.Th>
+                  <Table.Th>{t("answers", locale)}</Table.Th>
+                  <Table.Th>{t("actions", locale)}</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {sessions.map((session) => (
-                  <SessionRow key={session.id} session={session} />
+                  <SessionRow
+                    key={session.id}
+                    session={session}
+                    locale={locale}
+                  />
                 ))}
               </Table.Tbody>
             </Table>
@@ -213,7 +250,7 @@ const SessionsPage = ({ loaderData }: Route.ComponentProps) => {
           {/* Mobile: Card view */}
           <Stack gap="sm" hiddenFrom="sm">
             {sessions.map((session) => (
-              <SessionCard key={session.id} session={session} />
+              <SessionCard key={session.id} session={session} locale={locale} />
             ))}
           </Stack>
         </>

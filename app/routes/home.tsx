@@ -1,4 +1,5 @@
 import { Container, Title } from "@mantine/core";
+import { getLocale } from "~/.server/locale.server";
 import {
   getOrCreateSession,
   getQuestionsHierarchy,
@@ -6,20 +7,22 @@ import {
   saveAnswers,
 } from "~/.server/questions.server";
 import { DynamicForm } from "~/components/form/DynamicForm";
+import { t } from "~/lib/i18n";
 import type { Route } from "./+types/home";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const sessionId = url.searchParams.get("session") || undefined;
+  const locale = await getLocale(request);
 
   const [questions, session] = await Promise.all([
-    getQuestionsHierarchy("fr"),
+    getQuestionsHierarchy(locale),
     getOrCreateSession(sessionId),
   ]);
 
   const defaultValues = await getSessionAnswers(session.id);
 
-  return { questions, session, defaultValues };
+  return { questions, session, defaultValues, locale };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -34,18 +37,19 @@ export const action = async ({ request }: Route.ActionArgs) => {
 };
 
 const HomePage = ({ loaderData }: Route.ComponentProps) => {
-  const { questions, session, defaultValues } = loaderData;
+  const { questions, session, defaultValues, locale } = loaderData;
 
   return (
     <Container size="lg" py="xl" px="md">
       <Title order={1} mb="xl">
-        Formulaire ESG/CSRD
+        {t("formTitle", locale)}
       </Title>
       <DynamicForm
         key={session.id}
         questions={questions}
         sessionId={session.id}
         defaultValues={defaultValues}
+        locale={locale}
       />
     </Container>
   );

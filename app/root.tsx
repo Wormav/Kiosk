@@ -10,6 +10,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { getLocale } from "./.server/locale.server";
 import "./app.css";
 
 const theme = createTheme({
@@ -29,6 +30,11 @@ const theme = createTheme({
     ],
   },
 });
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const locale = await getLocale(request);
+  return { locale };
+};
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/jpeg", href: "/meetkiosk_logo.jpeg" },
@@ -53,7 +59,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => (
       <Links />
     </head>
     <body>
-      <MantineProvider theme={theme} forceColorScheme="light">{children}</MantineProvider>
+      <MantineProvider theme={theme} forceColorScheme="light">
+        {children}
+      </MantineProvider>
       <ScrollRestoration />
       <Scripts />
     </body>
@@ -62,12 +70,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => (
 
 import { Navbar } from "./components/Navbar";
 
-const App = () => (
-  <>
-    <Navbar />
-    <Outlet />
-  </>
-);
+const App = ({ loaderData }: Route.ComponentProps) => {
+  const { locale } = loaderData;
+
+  return (
+    <>
+      <Navbar locale={locale} />
+      <Outlet context={{ locale }} />
+    </>
+  );
+};
 
 export default App;
 

@@ -1,4 +1,5 @@
 import { Card, Stack, Text } from "@mantine/core";
+import type { Locale } from "~/.server/locale.server";
 import type { QuestionNode } from "~/lib/types";
 import { EnumField } from "./fields/EnumField";
 import { NumberField } from "./fields/NumberField";
@@ -9,9 +10,10 @@ import { QuestionGroup } from "./QuestionGroup";
 interface Props {
   question: QuestionNode;
   form: any;
+  locale: Locale;
 }
 
-export const QuestionField = ({ question, form }: Props) => {
+export const QuestionField = ({ question, form, locale }: Props) => {
   const { contentType, label, children } = question;
 
   // Grouping section (no contentType)
@@ -21,14 +23,14 @@ export const QuestionField = ({ question, form }: Props) => {
         <Text fw={600} size="xl" mb="md">
           {label}
         </Text>
-        <QuestionGroup questions={children} form={form} />
+        <QuestionGroup questions={children} form={form} locale={locale} />
       </Card>
     );
   }
 
   // Table
   if (contentType === "table") {
-    return <TableField question={question} form={form} />;
+    return <TableField question={question} form={form} locale={locale} />;
   }
 
   // Simple fields

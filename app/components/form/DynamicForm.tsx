@@ -1,21 +1,28 @@
 import {
   Alert,
   Button,
+  Collapse,
   Divider,
   Group,
   Stack,
   Transition,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconBinaryTree, IconX } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import { useEffect, useState } from "react";
 import { Link, useFetcher } from "react-router";
+import type { Locale } from "~/.server/locale.server";
+import { t } from "~/lib/i18n";
 import type { QuestionNode } from "~/lib/types";
 import { QuestionGroup } from "./QuestionGroup";
+import { TreeVisualization } from "./TreeVisualization";
 
 interface Props {
   questions: QuestionNode[];
   sessionId: string;
   defaultValues?: Record<string, unknown>;
+  locale: Locale;
 }
 
 const flattenAnswers = (
@@ -85,9 +92,11 @@ export const DynamicForm = ({
   questions,
   sessionId,
   defaultValues = {},
+  locale,
 }: Props) => {
   const fetcher = useFetcher<{ success?: boolean }>();
   const [showSuccess, setShowSuccess] = useState(false);
+  const [treeOpened, { toggle: toggleTree }] = useDisclosure(false);
   const isSubmitting = fetcher.state === "submitting";
 
   // Show success message when action completes
@@ -117,7 +126,26 @@ export const DynamicForm = ({
       }}
     >
       <Stack gap="xl">
-        <QuestionGroup questions={questions} form={form} />
+        {/* Toggle button for tree visualization */}
+        <Button
+          variant={treeOpened ? "filled" : "light"}
+          color={treeOpened ? "red" : "blue"}
+          leftSection={
+            treeOpened ? <IconX size={18} /> : <IconBinaryTree size={18} />
+          }
+          onClick={toggleTree}
+          size="sm"
+          style={{ alignSelf: "flex-start" }}
+        >
+          {treeOpened ? t("hideTree", locale) : t("showTree", locale)}
+        </Button>
+
+        {/* Collapsible tree visualization */}
+        <Collapse in={treeOpened}>
+          <TreeVisualization questions={questions} locale={locale} />
+        </Collapse>
+
+        <QuestionGroup questions={questions} form={form} locale={locale} />
 
         <Divider />
 
@@ -126,12 +154,12 @@ export const DynamicForm = ({
             <Alert
               style={styles}
               color="green"
-              title="Formulaire enregistré"
+              title={t("formSaved", locale)}
               withCloseButton
               onClose={() => setShowSuccess(false)}
             >
               <Stack gap="md">
-                <span>Vos réponses ont été sauvegardées avec succès.</span>
+                <span>{t("formSavedMessage", locale)}</span>
                 <Group gap="sm">
                   <Button
                     component={Link}
@@ -140,7 +168,7 @@ export const DynamicForm = ({
                     color="blue"
                     size="sm"
                   >
-                    Nouveau formulaire
+                    {t("newForm", locale)}
                   </Button>
                   <Button
                     component={Link}
@@ -148,7 +176,7 @@ export const DynamicForm = ({
                     variant="light"
                     size="sm"
                   >
-                    Voir les sessions
+                    {t("viewSessions", locale)}
                   </Button>
                 </Group>
               </Stack>
@@ -158,7 +186,7 @@ export const DynamicForm = ({
 
         <Group justify="flex-end">
           <Button type="submit" size="md" loading={isSubmitting}>
-            Sauvegarder
+            {t("save", locale)}
           </Button>
         </Group>
       </Stack>

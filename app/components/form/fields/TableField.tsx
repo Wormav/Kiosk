@@ -12,11 +12,14 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useState } from "react";
+import type { Locale } from "~/.server/locale.server";
+import { t } from "~/lib/i18n";
 import type { QuestionNode } from "~/lib/types";
 
 interface Props {
   question: QuestionNode;
   form: any;
+  locale: Locale;
 }
 
 // Mobile card view for a single row
@@ -28,6 +31,7 @@ const MobileRowCard = ({
   onDelete,
   onLabelChange,
   canDelete,
+  locale,
 }: {
   question: QuestionNode;
   form: any;
@@ -36,11 +40,12 @@ const MobileRowCard = ({
   onDelete: () => void;
   onLabelChange: (label: string) => void;
   canDelete: boolean;
+  locale: Locale;
 }) => (
   <Card withBorder padding="sm" radius="sm">
     <Group justify="space-between" mb="xs">
       <Text size="sm" fw={500} c="dimmed">
-        Ligne {rowIndex + 1}
+        {t("row", locale)} {rowIndex + 1}
       </Text>
       {canDelete && (
         <ActionIcon
@@ -57,12 +62,12 @@ const MobileRowCard = ({
     <Stack gap="xs">
       <Box>
         <Text size="xs" fw={500} mb={4}>
-          Libellé
+          {t("label", locale)}
         </Text>
         <form.Field name={`${question.id}[${rowIndex}]._rowLabel`}>
           {(field: any) => (
             <TextInput
-              placeholder="Ex: France, CDI Hommes..."
+              placeholder={t("labelPlaceholder", locale)}
               value={field.state.value ?? rowLabel}
               onChange={(e) => {
                 field.handleChange(e.target.value);
@@ -110,7 +115,7 @@ const MobileRowCard = ({
   </Card>
 );
 
-export const TableField = ({ question, form }: Props) => {
+export const TableField = ({ question, form, locale }: Props) => {
   // Initialize rows from form default values if they exist
   const getInitialRows = (): { id: number; label: string }[] => {
     const defaultData = form.state.values[question.id];
@@ -160,7 +165,7 @@ export const TableField = ({ question, form }: Props) => {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={50}>#</Table.Th>
-                <Table.Th miw={180}>Libellé</Table.Th>
+                <Table.Th miw={180}>{t("label", locale)}</Table.Th>
                 {question.children.map((child) => (
                   <Table.Th key={child.id} miw={150}>
                     {child.label}
@@ -186,7 +191,7 @@ export const TableField = ({ question, form }: Props) => {
                     <form.Field name={`${question.id}[${rowIndex}]._rowLabel`}>
                       {(field: any) => (
                         <TextInput
-                          placeholder="Ex: France, CDI Hommes..."
+                          placeholder={t("labelPlaceholder", locale)}
                           value={field.state.value ?? row.label}
                           onChange={(e) => {
                             field.handleChange(e.target.value);
@@ -258,6 +263,7 @@ export const TableField = ({ question, form }: Props) => {
             onDelete={() => removeRow(row.id)}
             onLabelChange={(label) => updateRowLabel(row.id, label)}
             canDelete={rows.length > 1}
+            locale={locale}
           />
         ))}
       </Stack>
@@ -265,14 +271,14 @@ export const TableField = ({ question, form }: Props) => {
       {/* Desktop: left aligned */}
       <Group mt="md" gap="xs" visibleFrom="sm">
         <Button variant="light" size="xs" onClick={addRow}>
-          + Ajouter une ligne
+          {t("addRow", locale)}
         </Button>
       </Group>
 
       {/* Mobile: centered */}
       <Group mt="md" gap="xs" justify="center" hiddenFrom="sm">
         <Button variant="light" size="xs" onClick={addRow}>
-          + Ajouter une ligne
+          {t("addRow", locale)}
         </Button>
       </Group>
     </Card>

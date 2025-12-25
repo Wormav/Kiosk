@@ -21,11 +21,14 @@ async function main() {
   });
 
   // === SESSION 1: French company "TechCorp France" ===
-  const session1 = await prisma.formSession.create({
-    data: {
-      id: "session-techcorp-france",
-    },
+  const session1 = await prisma.formSession.upsert({
+    where: { id: "session-techcorp-france" },
+    update: {},
+    create: { id: "session-techcorp-france" },
   });
+
+  // Delete existing answers for this session to avoid duplicates
+  await prisma.answer.deleteMany({ where: { sessionId: session1.id } });
 
   // Answers for session 1
   const session1Answers: {
@@ -156,11 +159,14 @@ async function main() {
   }
 
   // === SESSION 2: UK company "GreenTech UK" ===
-  const session2 = await prisma.formSession.create({
-    data: {
-      id: "session-greentech-uk",
-    },
+  const session2 = await prisma.formSession.upsert({
+    where: { id: "session-greentech-uk" },
+    update: {},
+    create: { id: "session-greentech-uk" },
   });
+
+  // Delete existing answers for this session to avoid duplicates
+  await prisma.answer.deleteMany({ where: { sessionId: session2.id } });
 
   const session2Answers: {
     questionId: string;

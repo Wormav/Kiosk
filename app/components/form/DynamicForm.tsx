@@ -99,12 +99,19 @@ export const DynamicForm = ({
   const [treeOpened, { toggle: toggleTree }] = useDisclosure(false);
   const isSubmitting = fetcher.state === "submitting";
 
+  // Reset success state when session changes
+  useEffect(() => {
+    setShowSuccess(false);
+  }, [sessionId]);
+
   // Show success message when action completes
   useEffect(() => {
-    if (fetcher.data?.success) {
+    console.log("Fetcher state:", fetcher.state, "data:", fetcher.data);
+    if (fetcher.state === "idle" && fetcher.data?.success) {
+      console.log("Setting showSuccess to true");
       setShowSuccess(true);
     }
-  }, [fetcher.data]);
+  }, [fetcher.state, fetcher.data]);
 
   const form = useForm({
     defaultValues: defaultValues as Record<string, unknown>,

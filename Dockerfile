@@ -15,8 +15,32 @@ WORKDIR /app
 RUN npm run build
 
 FROM node:20-alpine
-COPY ./package.json package-lock.json /app/
-COPY --from=production-dependencies-env /app/node_modules /app/node_modules
-COPY --from=build-env /app/build /app/build
+
+# Install postgresql-client for pg_isready
+RUN apk add --no-cache postgresql-client
+
 WORKDIR /app
-CMD ["npm", "run", "start"]
+
+# Copy package.json and production dependencies
+COPY ./package.json package-lock.json ./
+COPY --from=production-dependencies-env /app/node_modules ./node_modules
+
+# Copy the application build
+COPY --from=build-env /app/build ./build
+
+# Copy Prisma files needed for migrations and seeds
+COPY ./prisma ./prisma
+COPY ./prisma.config.ts ./
+COPY ./questions.csv ./
+
+# Install dependencies needed for seeds (tsx, prisma, csv-parse)
+RUN npm install prisma tsx csv-parse
+
+# Generate the Prisma client
+RUN npx prisma generate
+
+# Copy and configure the entrypoint
+COPY ./docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
+
+ENTRYPOINT ["./docker-entrypoint.sh"]

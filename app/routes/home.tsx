@@ -10,6 +10,12 @@ import { DynamicForm } from "~/components/form/DynamicForm";
 import { t } from "~/lib/i18n";
 import type { Route } from "./+types/home";
 
+// Don't revalidate (re-run loader) after a fetcher action
+// This prevents creating a new session after saving
+export const shouldRevalidate = () => {
+  return false;
+};
+
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const sessionId = url.searchParams.get("session") || undefined;

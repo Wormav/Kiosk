@@ -196,14 +196,14 @@ export const saveAnswers = async (
 
   for (const answer of answers) {
     const rowIndex = answer.rowIndex ?? null;
+    const rowLabel = answer.rowLabel || null;
 
-    // For table fields, we need to find existing answer by questionId and rowLabel (not rowIndex)
-    // because rowIndex might be null in old data
+    // Find existing answer by sessionId, questionId, and rowIndex
     const existing = await prisma.answer.findFirst({
       where: {
         sessionId,
         questionId: answer.questionId,
-        OR: [{ rowIndex }, { rowLabel: answer.rowLabel || undefined }],
+        rowIndex,
       },
     });
 
@@ -212,8 +212,7 @@ export const saveAnswers = async (
         where: { id: existing.id },
         data: {
           value: answer.value,
-          rowLabel: answer.rowLabel,
-          rowIndex, // Update rowIndex too for future consistency
+          rowLabel,
         },
       });
     } else {
@@ -223,7 +222,7 @@ export const saveAnswers = async (
           questionId: answer.questionId,
           value: answer.value,
           rowIndex,
-          rowLabel: answer.rowLabel,
+          rowLabel,
         },
       });
     }

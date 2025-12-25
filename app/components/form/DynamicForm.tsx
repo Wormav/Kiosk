@@ -1,6 +1,14 @@
-import { Button, Divider, Group, Stack } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Divider,
+  Group,
+  Stack,
+  Transition,
+} from "@mantine/core";
 import { useForm } from "@tanstack/react-form";
-import { useSubmit } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useFetcher } from "react-router";
 import type { QuestionNode } from "~/lib/types";
 import { QuestionGroup } from "./QuestionGroup";
 
@@ -78,18 +86,26 @@ export const DynamicForm = ({
   sessionId,
   defaultValues = {},
 }: Props) => {
-  const submit = useSubmit();
+  const fetcher = useFetcher<{ success?: boolean }>();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const isSubmitting = fetcher.state === "submitting";
+
+  // Show success message when action completes
+  useEffect(() => {
+    if (fetcher.data?.success) {
+      setShowSuccess(true);
+    }
+  }, [fetcher.data]);
 
   const form = useForm({
     defaultValues: defaultValues as Record<string, unknown>,
     onSubmit: async ({ value }) => {
-      console.log("Form value:", JSON.stringify(value, null, 2));
+      setShowSuccess(false);
       const answers = flattenAnswers(value);
-      console.log("Flattened answers:", JSON.stringify(answers, null, 2));
       const formData = new FormData();
       formData.set("sessionId", sessionId);
       formData.set("answers", JSON.stringify(answers));
-      submit(formData, { method: "post" });
+      fetcher.submit(formData, { method: "post" });
     },
   });
 
@@ -105,8 +121,43 @@ export const DynamicForm = ({
 
         <Divider />
 
+        <Transition mounted={showSuccess} transition="fade" duration={300}>
+          {(styles) => (
+            <Alert
+              style={styles}
+              color="green"
+              title="Formulaire enregistré"
+              withCloseButton
+              onClose={() => setShowSuccess(false)}
+            >
+              <Stack gap="md">
+                <span>Vos réponses ont été sauvegardées avec succès.</span>
+                <Group gap="sm">
+                  <Button
+                    component={Link}
+                    to="/"
+                    variant="filled"
+                    color="blue"
+                    size="sm"
+                  >
+                    Nouveau formulaire
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/sessions"
+                    variant="light"
+                    size="sm"
+                  >
+                    Voir les sessions
+                  </Button>
+                </Group>
+              </Stack>
+            </Alert>
+          )}
+        </Transition>
+
         <Group justify="flex-end">
-          <Button type="submit" size="md">
+          <Button type="submit" size="md" loading={isSubmitting}>
             Sauvegarder
           </Button>
         </Group>

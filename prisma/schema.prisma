@@ -68,6 +68,7 @@ model Answer {
   question   Question    @relation(fields: [questionId], references: [id])
   value      String?
   rowIndex   Int? // For table-type questions
+  rowLabel   String? // User-defined label for the row (e.g., "France", "CDI Hommes")
 
   @@unique([sessionId, questionId, rowIndex])
 }

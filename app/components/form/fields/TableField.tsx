@@ -24,13 +24,17 @@ const MobileRowCard = ({
   question,
   form,
   rowIndex,
+  rowLabel,
   onDelete,
+  onLabelChange,
   canDelete,
 }: {
   question: QuestionNode;
   form: any;
   rowIndex: number;
+  rowLabel: string;
   onDelete: () => void;
+  onLabelChange: (label: string) => void;
   canDelete: boolean;
 }) => (
   <Card withBorder padding="sm" radius="sm">
@@ -51,6 +55,25 @@ const MobileRowCard = ({
       )}
     </Group>
     <Stack gap="xs">
+      <Box>
+        <Text size="xs" fw={500} mb={4}>
+          Libellé
+        </Text>
+        <form.Field name={`${question.id}[${rowIndex}]._rowLabel`}>
+          {(field: any) => (
+            <TextInput
+              placeholder="Ex: France, CDI Hommes..."
+              value={field.state.value ?? rowLabel}
+              onChange={(e) => {
+                field.handleChange(e.target.value);
+                onLabelChange(e.target.value);
+              }}
+              onBlur={field.handleBlur}
+              size="sm"
+            />
+          )}
+        </form.Field>
+      </Box>
       {question.children.map((child) => (
         <Box key={child.id}>
           <Text size="xs" fw={500} mb={4}>
@@ -88,17 +111,39 @@ const MobileRowCard = ({
 );
 
 export const TableField = ({ question, form }: Props) => {
-  const [rows, setRows] = useState<number[]>([0]);
-  const [nextId, setNextId] = useState(1);
+  // Initialize rows from form default values if they exist
+  const getInitialRows = (): { id: number; label: string }[] => {
+    const defaultData = form.state.values[question.id];
+    if (Array.isArray(defaultData) && defaultData.length > 0) {
+      return defaultData.map((row: Record<string, unknown>, index: number) => ({
+        id: index,
+        label: (row._rowLabel as string) || "",
+      }));
+    }
+    return [{ id: 0, label: "" }];
+  };
+
+  const [rows, setRows] =
+    useState<{ id: number; label: string }[]>(getInitialRows);
+  const [nextId, setNextId] = useState(() => {
+    const defaultData = form.state.values[question.id];
+    return Array.isArray(defaultData) ? defaultData.length : 1;
+  });
+
+  const updateRowLabel = (rowId: number, label: string) => {
+    setRows((prev) =>
+      prev.map((row) => (row.id === rowId ? { ...row, label } : row)),
+    );
+  };
 
   const addRow = () => {
-    setRows((prev) => [...prev, nextId]);
+    setRows((prev) => [...prev, { id: nextId, label: "" }]);
     setNextId((prev) => prev + 1);
   };
 
   const removeRow = (rowId: number) => {
     if (rows.length > 1) {
-      setRows((prev) => prev.filter((id) => id !== rowId));
+      setRows((prev) => prev.filter((row) => row.id !== rowId));
     }
   };
 
@@ -115,6 +160,7 @@ export const TableField = ({ question, form }: Props) => {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th w={50}>#</Table.Th>
+                <Table.Th miw={180}>Libellé</Table.Th>
                 {question.children.map((child) => (
                   <Table.Th key={child.id} miw={150}>
                     {child.label}
@@ -129,12 +175,28 @@ export const TableField = ({ question, form }: Props) => {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {rows.map((rowId, rowIndex) => (
-                <Table.Tr key={rowId}>
+              {rows.map((row, rowIndex) => (
+                <Table.Tr key={row.id}>
                   <Table.Td>
                     <Text c="dimmed" size="sm">
                       {rowIndex + 1}
                     </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <form.Field name={`${question.id}[${rowIndex}]._rowLabel`}>
+                      {(field: any) => (
+                        <TextInput
+                          placeholder="Ex: France, CDI Hommes..."
+                          value={field.state.value ?? row.label}
+                          onChange={(e) => {
+                            field.handleChange(e.target.value);
+                            updateRowLabel(row.id, e.target.value);
+                          }}
+                          onBlur={field.handleBlur}
+                          size="sm"
+                        />
+                      )}
+                    </form.Field>
                   </Table.Td>
                   {question.children.map((child) => (
                     <Table.Td key={child.id}>
@@ -170,7 +232,7 @@ export const TableField = ({ question, form }: Props) => {
                         variant="light"
                         color="red"
                         size="sm"
-                        onClick={() => removeRow(rowId)}
+                        onClick={() => removeRow(row.id)}
                         aria-label="Delete row"
                       >
                         ✕
@@ -186,13 +248,15 @@ export const TableField = ({ question, form }: Props) => {
 
       {/* Mobile: Card view */}
       <Stack gap="sm" hiddenFrom="sm">
-        {rows.map((rowId, rowIndex) => (
+        {rows.map((row, rowIndex) => (
           <MobileRowCard
-            key={rowId}
+            key={row.id}
             question={question}
             form={form}
             rowIndex={rowIndex}
-            onDelete={() => removeRow(rowId)}
+            rowLabel={row.label}
+            onDelete={() => removeRow(row.id)}
+            onLabelChange={(label) => updateRowLabel(row.id, label)}
             canDelete={rows.length > 1}
           />
         ))}

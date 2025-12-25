@@ -18,4 +18,5 @@ export interface AnswerInput {
   questionId: string;
   value: string;
   rowIndex?: number;
+  rowLabel?: string;
 }

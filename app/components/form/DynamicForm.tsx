@@ -12,19 +12,41 @@ interface Props {
 
 const flattenAnswers = (
   values: Record<string, unknown>,
-): { questionId: string; value: string; rowIndex?: number }[] => {
-  const results: { questionId: string; value: string; rowIndex?: number }[] =
-    [];
+): {
+  questionId: string;
+  value: string;
+  rowIndex?: number;
+  rowLabel?: string;
+}[] => {
+  const results: {
+    questionId: string;
+    value: string;
+    rowIndex?: number;
+    rowLabel?: string;
+  }[] = [];
 
-  const processValue = (key: string, value: unknown, rowIndex?: number) => {
+  const processValue = (
+    key: string,
+    value: unknown,
+    rowIndex?: number,
+    rowLabel?: string,
+  ) => {
     if (value === undefined || value === null || value === "") return;
 
     if (typeof value === "object" && !Array.isArray(value)) {
       // Nested object (e.g., table row fields)
-      for (const [nestedKey, nestedValue] of Object.entries(
-        value as Record<string, unknown>,
-      )) {
-        processValue(nestedKey, nestedValue, rowIndex);
+      const rowObj = value as Record<string, unknown>;
+      const currentRowLabel = rowObj["_rowLabel"] as string | undefined;
+
+      for (const [nestedKey, nestedValue] of Object.entries(rowObj)) {
+        // Skip _rowLabel as it's metadata, not a question answer
+        if (nestedKey === "_rowLabel") continue;
+        processValue(
+          nestedKey,
+          nestedValue,
+          rowIndex,
+          currentRowLabel || rowLabel,
+        );
       }
     } else if (Array.isArray(value)) {
       // Array of rows (table data)
@@ -39,6 +61,7 @@ const flattenAnswers = (
         questionId: key,
         value: String(value),
         rowIndex,
+        rowLabel,
       });
     }
   };

@@ -142,6 +142,11 @@ export const getSessionAnswers = async (sessionId: string) => {
         }
 
         tableArray[answer.rowIndex][answer.questionId] = answer.value || "";
+
+        // Store rowLabel if present
+        if (answer.rowLabel) {
+          tableArray[answer.rowIndex]["_rowLabel"] = answer.rowLabel;
+        }
       }
     } else {
       result[answer.questionId] = answer.value || "";
@@ -176,7 +181,10 @@ export const saveAnswers = async (
     if (existing) {
       await prisma.answer.update({
         where: { id: existing.id },
-        data: { value: answer.value },
+        data: {
+          value: answer.value,
+          rowLabel: answer.rowLabel,
+        },
       });
     } else {
       await prisma.answer.create({
@@ -185,6 +193,7 @@ export const saveAnswers = async (
           questionId: answer.questionId,
           value: answer.value,
           rowIndex,
+          rowLabel: answer.rowLabel,
         },
       });
     }

@@ -22,8 +22,6 @@ interface CsvRow {
 }
 
 async function main() {
-  console.log("🌱 Starting seed...");
-
   const csvPath = path.join(process.cwd(), "questions.csv");
   const csvContent = fs.readFileSync(csvPath, "utf-8");
 
@@ -32,8 +30,6 @@ async function main() {
     delimiter: ";",
     skip_empty_lines: true,
   });
-
-  console.log(`📋 ${records.length} questions found in the CSV`);
 
   // First pass: create all questions without parent relations
   for (const row of records) {
@@ -123,17 +119,13 @@ async function main() {
           ],
         });
       }
-
-      console.log(`  ✅ ${optionsEn.length} enum options created for ${id}`);
     }
   }
-
-  console.log("✅ Seed completed successfully!");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error during seed:", e);
+    console.error(e);
     process.exit(1);
   })
   .finally(async () => {

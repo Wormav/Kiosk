@@ -11,18 +11,8 @@ async function main() {
     select: { id: true, contentType: true, parentId: true },
   });
 
-  console.log(`Found ${questions.length} questions`);
-
   // Find table questions and their children
-  const tableQuestions = questions.filter((q) => q.contentType === "table");
-  const simpleQuestions = questions.filter(
-    (q) => q.contentType && q.contentType !== "table" && !q.parentId,
-  );
   const enumQuestions = questions.filter((q) => q.contentType === "enum");
-
-  console.log(`Tables: ${tableQuestions.length}`);
-  console.log(`Simple questions: ${simpleQuestions.length}`);
-  console.log(`Enum questions: ${enumQuestions.length}`);
 
   // Get enum options for enum questions
   const enumOptions = await prisma.enumOption.findMany({
@@ -36,7 +26,6 @@ async function main() {
       id: "session-techcorp-france",
     },
   });
-  console.log(`Created session 1: ${session1.id}`);
 
   // Answers for session 1
   const session1Answers: {
@@ -165,7 +154,6 @@ async function main() {
       },
     });
   }
-  console.log(`Created ${session1Answers.length} answers for session 1`);
 
   // === SESSION 2: UK company "GreenTech UK" ===
   const session2 = await prisma.formSession.create({
@@ -173,7 +161,6 @@ async function main() {
       id: "session-greentech-uk",
     },
   });
-  console.log(`Created session 2: ${session2.id}`);
 
   const session2Answers: {
     questionId: string;
@@ -319,9 +306,6 @@ async function main() {
       },
     });
   }
-  console.log(`Created ${session2Answers.length} answers for session 2`);
-
-  console.log("\n✅ Successfully created 2 test sessions with realistic data!");
 }
 
 main()

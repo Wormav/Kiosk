@@ -117,10 +117,6 @@ export const getSessionAnswers = async (sessionId: string) => {
     where: { sessionId },
   });
 
-  console.log("=== getSessionAnswers ===");
-  console.log("sessionId:", sessionId);
-  console.log("answers from DB:", JSON.stringify(answers, null, 2));
-
   const result: Record<string, unknown> = {};
 
   // First, get all questions to know which ones belong to tables
@@ -152,10 +148,6 @@ export const getSessionAnswers = async (sessionId: string) => {
     const parentId = questionParentMap.get(answer.questionId);
     const isTableField = parentId && tableIds.has(parentId);
 
-    console.log(
-      `Processing answer: questionId=${answer.questionId}, parentId=${parentId}, isTableField=${isTableField}, rowIndex=${answer.rowIndex}, rowLabel=${answer.rowLabel}, value=${answer.value}`,
-    );
-
     if (isTableField) {
       // This is a table field - group by parentId and rowLabel
       const tableId = parentId;
@@ -182,8 +174,6 @@ export const getSessionAnswers = async (sessionId: string) => {
     result[tableId] = Array.from(rowsMap.values());
   }
 
-  console.log("=== Final result ===");
-  console.log("defaultValues:", JSON.stringify(result, null, 2));
   return result;
 };
 
@@ -198,10 +188,6 @@ export const saveAnswers = async (
   sessionId: string,
   answers: AnswerInput[],
 ) => {
-  console.log("=== saveAnswers ===");
-  console.log("sessionId:", sessionId);
-  console.log("answers to save:", JSON.stringify(answers, null, 2));
-
   // Update session's updatedAt timestamp
   await prisma.formSession.update({
     where: { id: sessionId },
@@ -221,10 +207,6 @@ export const saveAnswers = async (
       },
     });
 
-    console.log(
-      `Processing: questionId=${answer.questionId}, rowIndex=${rowIndex}, rowLabel=${answer.rowLabel}, value=${answer.value}, existing=${existing?.id}`,
-    );
-
     if (existing) {
       await prisma.answer.update({
         where: { id: existing.id },
@@ -234,9 +216,8 @@ export const saveAnswers = async (
           rowIndex, // Update rowIndex too for future consistency
         },
       });
-      console.log(`Updated answer ${existing.id}`);
     } else {
-      const created = await prisma.answer.create({
+      await prisma.answer.create({
         data: {
           sessionId,
           questionId: answer.questionId,
@@ -245,7 +226,6 @@ export const saveAnswers = async (
           rowLabel: answer.rowLabel,
         },
       });
-      console.log(`Created answer ${created.id}`);
     }
   }
 };

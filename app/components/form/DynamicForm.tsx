@@ -83,7 +83,9 @@ export const DynamicForm = ({
   const form = useForm({
     defaultValues: defaultValues as Record<string, unknown>,
     onSubmit: async ({ value }) => {
+      console.log("Form value:", JSON.stringify(value, null, 2));
       const answers = flattenAnswers(value);
+      console.log("Flattened answers:", JSON.stringify(answers, null, 2));
       const formData = new FormData();
       formData.set("sessionId", sessionId);
       formData.set("answers", JSON.stringify(answers));

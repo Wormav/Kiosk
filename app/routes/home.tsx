@@ -42,6 +42,7 @@ const HomePage = ({ loaderData }: Route.ComponentProps) => {
         Formulaire ESG/CSRD
       </Title>
       <DynamicForm
+        key={session.id}
         questions={questions}
         sessionId={session.id}
         defaultValues={defaultValues}

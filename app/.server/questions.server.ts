@@ -117,42 +117,73 @@ export const getSessionAnswers = async (sessionId: string) => {
     where: { sessionId },
   });
 
+  console.log("=== getSessionAnswers ===");
+  console.log("sessionId:", sessionId);
+  console.log("answers from DB:", JSON.stringify(answers, null, 2));
+
   const result: Record<string, unknown> = {};
 
+  // First, get all questions to know which ones belong to tables
+  const questionIds = answers.map((a) => a.questionId);
+  const questions = await prisma.question.findMany({
+    where: { id: { in: questionIds } },
+    select: { id: true, parentId: true },
+  });
+
+  // Get parent questions to check if they are tables
+  const parentIds = questions
+    .map((q) => q.parentId)
+    .filter((id): id is string => id !== null);
+  const parentQuestions = await prisma.question.findMany({
+    where: { id: { in: parentIds } },
+    select: { id: true, contentType: true },
+  });
+  const tableIds = new Set(
+    parentQuestions.filter((p) => p.contentType === "table").map((p) => p.id),
+  );
+
+  // Map questionId -> parentId
+  const questionParentMap = new Map(questions.map((q) => [q.id, q.parentId]));
+
+  // Group table answers by parentId and rowLabel to reconstruct rows
+  const tableRowsMap = new Map<string, Map<string, Record<string, unknown>>>();
+
   for (const answer of answers) {
-    if (answer.rowIndex !== null) {
-      // Find the parent table question
-      const question = await prisma.question.findUnique({
-        where: { id: answer.questionId },
-        select: { parentId: true },
-      });
+    const parentId = questionParentMap.get(answer.questionId);
+    const isTableField = parentId && tableIds.has(parentId);
 
-      if (question?.parentId) {
-        const tableId = question.parentId;
+    console.log(
+      `Processing answer: questionId=${answer.questionId}, parentId=${parentId}, isTableField=${isTableField}, rowIndex=${answer.rowIndex}, rowLabel=${answer.rowLabel}, value=${answer.value}`,
+    );
 
-        if (!result[tableId]) {
-          result[tableId] = [];
-        }
+    if (isTableField) {
+      // This is a table field - group by parentId and rowLabel
+      const tableId = parentId;
+      const rowKey = answer.rowLabel || `row_${answer.rowIndex ?? 0}`;
 
-        const tableArray = result[tableId] as Record<string, unknown>[];
-
-        // Ensure the row exists
-        while (tableArray.length <= answer.rowIndex) {
-          tableArray.push({});
-        }
-
-        tableArray[answer.rowIndex][answer.questionId] = answer.value || "";
-
-        // Store rowLabel if present
-        if (answer.rowLabel) {
-          tableArray[answer.rowIndex]["_rowLabel"] = answer.rowLabel;
-        }
+      if (!tableRowsMap.has(tableId)) {
+        tableRowsMap.set(tableId, new Map());
       }
+      const rowsMap = tableRowsMap.get(tableId)!;
+
+      if (!rowsMap.has(rowKey)) {
+        rowsMap.set(rowKey, { _rowLabel: answer.rowLabel || "" });
+      }
+
+      rowsMap.get(rowKey)![answer.questionId] = answer.value || "";
     } else {
+      // Simple field
       result[answer.questionId] = answer.value || "";
     }
   }
 
+  // Convert tableRowsMap to arrays
+  for (const [tableId, rowsMap] of tableRowsMap) {
+    result[tableId] = Array.from(rowsMap.values());
+  }
+
+  console.log("=== Final result ===");
+  console.log("defaultValues:", JSON.stringify(result, null, 2));
   return result;
 };
 
@@ -167,16 +198,32 @@ export const saveAnswers = async (
   sessionId: string,
   answers: AnswerInput[],
 ) => {
+  console.log("=== saveAnswers ===");
+  console.log("sessionId:", sessionId);
+  console.log("answers to save:", JSON.stringify(answers, null, 2));
+
+  // Update session's updatedAt timestamp
+  await prisma.formSession.update({
+    where: { id: sessionId },
+    data: { updatedAt: new Date() },
+  });
+
   for (const answer of answers) {
     const rowIndex = answer.rowIndex ?? null;
 
+    // For table fields, we need to find existing answer by questionId and rowLabel (not rowIndex)
+    // because rowIndex might be null in old data
     const existing = await prisma.answer.findFirst({
       where: {
         sessionId,
         questionId: answer.questionId,
-        rowIndex,
+        OR: [{ rowIndex }, { rowLabel: answer.rowLabel || undefined }],
       },
     });
+
+    console.log(
+      `Processing: questionId=${answer.questionId}, rowIndex=${rowIndex}, rowLabel=${answer.rowLabel}, value=${answer.value}, existing=${existing?.id}`,
+    );
 
     if (existing) {
       await prisma.answer.update({
@@ -184,10 +231,12 @@ export const saveAnswers = async (
         data: {
           value: answer.value,
           rowLabel: answer.rowLabel,
+          rowIndex, // Update rowIndex too for future consistency
         },
       });
+      console.log(`Updated answer ${existing.id}`);
     } else {
-      await prisma.answer.create({
+      const created = await prisma.answer.create({
         data: {
           sessionId,
           questionId: answer.questionId,
@@ -196,6 +245,7 @@ export const saveAnswers = async (
           rowLabel: answer.rowLabel,
         },
       });
+      console.log(`Created answer ${created.id}`);
     }
   }
 };

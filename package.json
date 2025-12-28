@@ -1,0 +1,46 @@
+{
+  "name": "test",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@mantine/core": "^8.3.10",
+    "@mantine/form": "^8.3.10",
+    "@mantine/hooks": "^8.3.10",
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "@react-router/node": "7.10.1",
+    "@react-router/serve": "7.10.1",
+    "@tabler/icons-react": "^3.36.0",
+    "@tanstack/react-form": "^1.27.6",
+    "dotenv": "^17.2.3",
+    "isbot": "^5.1.31",
+    "pg": "^8.16.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router": "7.10.1"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@react-router/dev": "7.10.1",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^22",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "csv-parse": "^6.1.0",
+    "prisma": "^7.2.0",
+    "tailwindcss": "^4.1.13",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "vite-tsconfig-paths": "^5.1.4"
+  }
+}

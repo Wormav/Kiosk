@@ -1,0 +1,16 @@
+__pycache__
+/senior_frontend/backend/backend/kiosk.db-wal
+/senior_frontend/backend/backend/kiosk.db-shm
+/senior_frontend/backend/.direnv
+
+.DS_Store
+.env
+/node_modules/
+
+# React Router
+/.react-router/
+/build/
+
+.env
+
+/generated/prisma

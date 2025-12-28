@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Question {
+  id          String  @id
+  contentType String? // number, text, enum, table, null
+  order       Int     @default(0)
+  unit        String?
+
+  // Hierarchy
+  parentId String?
+  parent   Question?  @relation("QuestionHierarchy", fields: [parentId], references: [id])
+  children Question[] @relation("QuestionHierarchy")
+
+  // Relations
+  labels      QuestionLabel[]
+  enumOptions EnumOption[]
+  answers     Answer[]
+
+  createdAt DateTime @default(now())
+}
+
+model QuestionLabel {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  locale     String // "en" or "fr"
+  label      String
+
+  @@unique([questionId, locale])
+}
+
+model EnumOption {
+  id         String            @id @default(cuid())
+  questionId String
+  question   Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  order      Int               @default(0)
+  labels     EnumOptionLabel[]
+}
+
+model EnumOptionLabel {
+  id           String     @id @default(cuid())
+  enumOptionId String
+  enumOption   EnumOption @relation(fields: [enumOptionId], references: [id], onDelete: Cascade)
+  locale       String
+  label        String
+
+  @@unique([enumOptionId, locale])
+}
+
+model FormSession {
+  id        String   @id @default(cuid())
+  answers   Answer[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Answer {
+  id         String      @id @default(cuid())
+  sessionId  String
+  session    FormSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  questionId String
+  question   Question    @relation(fields: [questionId], references: [id])
+  value      String?
+  rowIndex   Int? // For table-type questions
+  rowLabel   String? // User-defined label for the row (e.g., "France", "CDI Hommes")
+
+  @@unique([sessionId, questionId, rowIndex])
+}
